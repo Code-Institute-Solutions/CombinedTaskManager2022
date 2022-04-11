@@ -11,9 +11,8 @@
                     <i class="fas fa-folder-open prefix light-blue-text text-darken-4"></i>
 					<select id="category_id" name="category_id" class="validate" required>
                         <option value="" disabled>Choose Category</option>
-                        <option value="" disabled>Choose Category</option>
                     {% for category in categories %}
-                        {% if category == task.category %}
+                        {% if category.id == task.category_id | int %}
                             <option value="{{ category.id }}" selected>{{ category.category_name }}</option>
                         {% else %}
                             <option value="{{ category.id }}">{{ category.category_name }}</option>
