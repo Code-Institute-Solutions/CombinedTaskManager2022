@@ -23,6 +23,10 @@ def search():
 
 @app.route("/add_task", methods=["GET", "POST"])
 def add_task():
+    if "user" not in session:
+        flash("You need to be logged in to add a task")
+        return redirect(url_for("get_tasks"))
+
     if request.method == "POST":
         is_urgent = "on" if request.form.get("is_urgent") else "off"
         task = {
@@ -57,12 +61,24 @@ def edit_task(task_id):
         flash("Task Successfully Updated")
 
     task = mongo.db.tasks.find_one({"_id": ObjectId(task_id)})
+
+    if "user" not in session or session["user"] != task["created_by"]:
+        flash("You can only edit your own tasks!")
+        return redirect(url_for("get_tasks"))
+
     categories = list(Category.query.order_by(Category.category_name).all())
     return render_template("edit_task.html", task=task, categories=categories)
 
 
 @app.route("/delete_task/<task_id>")
 def delete_task(task_id):
+
+    task = mongo.db.tasks.find_one({"_id": ObjectId(task_id)})
+
+    if "user" not in session or session["user"] != task["created_by"]:
+        flash("You can only delete your own tasks!")
+        return redirect(url_for("get_tasks"))
+
     mongo.db.tasks.remove({"_id": ObjectId(task_id)})
     flash("Task Successfully Deleted")
     return redirect(url_for("get_tasks"))
@@ -70,12 +86,22 @@ def delete_task(task_id):
 
 @app.route("/get_categories")
 def get_categories():
+
+    if "user" not in session or session["user"] != "admin":
+        flash("You must be admin to manage categories!")
+        return redirect(url_for("get_tasks"))
+
     categories = list(Category.query.order_by(Category.category_name).all())
     return render_template("categories.html", categories=categories)
 
 
 @app.route("/add_category", methods=["GET", "POST"])
 def add_category():
+
+    if "user" not in session or session["user"] != "admin":
+        flash("You must be admin to manage categories!")
+        return redirect(url_for("get_tasks"))
+
     if request.method == "POST":
         category = Category(category_name=request.form.get("category_name"))
         db.session.add(category)
@@ -86,6 +112,10 @@ def add_category():
 
 @app.route("/edit_category/<int:category_id>", methods=["GET", "POST"])
 def edit_category(category_id):
+    if "user" not in session or session["user"] != "admin":
+        flash("You must be admin to manage categories!")
+        return redirect(url_for("get_tasks"))
+    
     category = Category.query.get_or_404(category_id)
     if request.method == "POST":
         category.category_name = request.form.get("category_name")
@@ -96,6 +126,10 @@ def edit_category(category_id):
 
 @app.route("/delete_category/<int:category_id>")
 def delete_category(category_id):
+    if session["user"] != "admin":
+        flash("You must be admin to manage categories!")
+        return redirect(url_for("get_tasks"))
+
     category = Category.query.get_or_404(category_id)
     db.session.delete(category)
     db.session.commit()
@@ -163,7 +197,7 @@ def login():
 @app.route("/profile/<username>", methods=["GET", "POST"])
 def profile(username):
         
-    if session["user"]:
+    if "user" in session:
         return render_template("profile.html", username=session["user"])
 
     return redirect(url_for("login"))
