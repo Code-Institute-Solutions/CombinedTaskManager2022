@@ -166,7 +166,7 @@ def profile(username):
     username = Users.query.filter(Users.user_name == session["user"]).all()
         
     if session["user"]:
-        return render_template("profile.html", username=username)
+        return render_template("profile.html", username=session["user"])
 
     return redirect(url_for("login"))
 
