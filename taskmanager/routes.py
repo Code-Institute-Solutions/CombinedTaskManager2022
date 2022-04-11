@@ -162,8 +162,6 @@ def login():
 
 @app.route("/profile/<username>", methods=["GET", "POST"])
 def profile(username):
-    # grab the session user's username from db
-    username = Users.query.filter(Users.user_name == session["user"]).all()
         
     if session["user"]:
         return render_template("profile.html", username=session["user"])
