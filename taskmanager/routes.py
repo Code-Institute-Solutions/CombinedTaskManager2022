@@ -47,6 +47,13 @@ def add_task():
 
 @app.route("/edit_task/<task_id>", methods=["GET", "POST"])
 def edit_task(task_id):
+    
+    task = mongo.db.tasks.find_one({"_id": ObjectId(task_id)})
+
+    if "user" not in session or session["user"] != task["created_by"]:
+        flash("You can only edit your own tasks!")
+        return redirect(url_for("get_tasks"))
+
     if request.method == "POST":
         is_urgent = "on" if request.form.get("is_urgent") else "off"
         submit = {
@@ -59,12 +66,6 @@ def edit_task(task_id):
         }
         mongo.db.tasks.update({"_id": ObjectId(task_id)}, submit)
         flash("Task Successfully Updated")
-
-    task = mongo.db.tasks.find_one({"_id": ObjectId(task_id)})
-
-    if "user" not in session or session["user"] != task["created_by"]:
-        flash("You can only edit your own tasks!")
-        return redirect(url_for("get_tasks"))
 
     categories = list(Category.query.order_by(Category.category_name).all())
     return render_template("edit_task.html", task=task, categories=categories)
